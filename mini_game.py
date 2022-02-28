@@ -23,7 +23,9 @@ class Player(pygame.sprite.Sprite):
 		#boring white rectangles
 		# self.surf = pygame.Surface((75, 25))
 		# self.surf.fill(white)
-		self.surf = pygame.image.load("jet.png").convert()
+		self.surf = pygame.image.load("Run (7).png").convert()
+		#? The RLEACCEL constant is an optional parameter that helps pygame render
+		#? more quickly on non-accelerated displays.
 		self.surf.set_colorkey(white, RLEACCEL)
 		self.rect = self.surf.get_rect()
 
@@ -52,8 +54,10 @@ class Player(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
 	def __init__(self):
 		super(Enemy, self).__init__()
-		self.surf = pygame.Surface((20, 10))
-		self.surf.fill((255, 255, 255))
+		# self.surf = pygame.Surface((20, 10))
+		# self.surf.fill((255, 255, 255))
+		self.surf = pygame.image.load("Gantu.png").convert()
+		self.surf.set_colorkey(white, RLEACCEL)
 		self.rect = self.surf.get_rect(
 			center=(
 				random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
@@ -69,8 +73,28 @@ class Enemy(pygame.sprite.Sprite):
 		if self.rect.right < 0:
 			self.kill()
 
+class Palm(pygame.sprite.Sprite):
+	def __init__(self):
+		super(Palm, self).__init__()
+		self.surf = pygame.image.load("palm.png").convert()
+		self.surf.set_colorkey(black, RLEACCEL)
+		# The starting position is randomly generated
+		self.rect = self.surf.get_rect(
+            center=(
+                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
+                random.randint(0, SCREEN_HEIGHT),
+            )
+        )
+    # Move the Palm based on a constant speed
+    # Remove the Palm when it passes the left edge of the screen
+	def update(self):
+		self.rect.move_ip(-5, 0)
+		if self.rect.right < 0:
+			self.kill()
+
 
 pygame.init()
+clock = pygame.time.Clock()
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 pygame.display.set_caption("Collision Detection Game")
@@ -79,11 +103,15 @@ pygame.display.set_caption("Collision Detection Game")
 ADDENEMY = pygame.USEREVENT + 1
 pygame.time.set_timer(ADDENEMY, 250)
 
+ADDPALM = pygame.USEREVENT + 2
+pygame.time.set_timer(ADDPALM, 1000)
+
 
 # Instantiate player. Right now, this is just a rectangle.
 player = Player()
 
 enemies = pygame.sprite.Group()
+palms = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 
@@ -105,6 +133,10 @@ while running:
 			new_enemy = Enemy()
 			enemies.add(new_enemy)
 			all_sprites.add(new_enemy)
+		elif event.type == ADDPALM:
+			new_palm = Palm()
+			palms.add(new_palm)
+			all_sprites.add(new_palm)
 
 	# Get all the keys currently pressed
 	pressed_keys = pygame.key.get_pressed()
@@ -113,9 +145,11 @@ while running:
 
 	#update enemy position
 	enemies.update()
+	palms.update()
 
 	# Fill the screen with white
-	screen.fill(black)
+	# screen.fill(black)
+	screen.fill((135, 206, 250))
 	# # Create a surface and pass in a tuple containing its length and width
 	# surf = pygame.Surface((50, 50))
 	# # Give the surface a color to separate it from the background
@@ -137,9 +171,10 @@ while running:
 	# Update the display
 	pygame.display.flip() # get your newly created Surface to display on the screen
 
+	# Ensure program maintains a rate of 30 frames per second
+	clock.tick(30)
 
-
-	pygame.display.flip()
+	# pygame.display.flip()
 
 pygame.quit()
 
