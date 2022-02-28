@@ -1,6 +1,8 @@
+from cProfile import run
+from errno import ENETDOWN
 import random
 import pygame
-from pygame.locals import (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ESCAPE, KEYDOWN, QUIT)
+from pygame.locals import (K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ESCAPE, KEYDOWN, QUIT, RLEACCEL)
 
 # color
 red = (255, 0, 0)
@@ -18,8 +20,11 @@ SCREEN_HEIGHT = 600
 class Player(pygame.sprite.Sprite):
 	def __init__(self):
 		super(Player, self).__init__()
-		self.surf = pygame.Surface((75, 25))
-		self.surf.fill(white)
+		#boring white rectangles
+		# self.surf = pygame.Surface((75, 25))
+		# self.surf.fill(white)
+		self.surf = pygame.image.load("jet.png").convert()
+		self.surf.set_colorkey(white, RLEACCEL)
 		self.rect = self.surf.get_rect()
 
 	def update(self, pressed_keys):
@@ -68,9 +73,20 @@ class Enemy(pygame.sprite.Sprite):
 pygame.init()
 
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+pygame.display.set_caption("Collision Detection Game")
+
+# Create a custom event for adding a new enemy
+ADDENEMY = pygame.USEREVENT + 1
+pygame.time.set_timer(ADDENEMY, 250)
+
 
 # Instantiate player. Right now, this is just a rectangle.
 player = Player()
+
+enemies = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
+all_sprites.add(player)
+
 
 running = True
 while running:
@@ -83,11 +99,20 @@ while running:
 		if event.type == pygame.KEYDOWN:
 			if event.key == K_ESCAPE:
 				running = False
+		# add new enemy
+		elif event.type == ADDENEMY:
+			# create the new enemy and add it to sprite groups
+			new_enemy = Enemy()
+			enemies.add(new_enemy)
+			all_sprites.add(new_enemy)
+
 	# Get all the keys currently pressed
 	pressed_keys = pygame.key.get_pressed()
 	# Update the player sprite based on user keypresses
 	player.update(pressed_keys)
 
+	#update enemy position
+	enemies.update()
 
 	# Fill the screen with white
 	screen.fill(black)
@@ -101,8 +126,14 @@ while running:
 	
 	# Draw the player on the screen
 	# screen.blit(player.surf, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
-	screen.blit(player.surf, player.rect)
-	
+	# screen.blit(player.surf, player.rect)
+	# Draw all sprites
+	for entity in all_sprites:
+		screen.blit(entity.surf, entity.rect)
+
+	if pygame.sprite.spritecollideany(player, enemies):
+		player.kill()
+		running = False
 	# Update the display
 	pygame.display.flip() # get your newly created Surface to display on the screen
 
